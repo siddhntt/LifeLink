@@ -21,7 +21,7 @@ async function getScoringWeights() {
 }
 
 function scoreDistance(distanceKm, maxRadiusKm = 50) {
-  if (distanceKm == null) return 0;
+  if (distanceKm === null || distanceKm === undefined) return 0;
   const normalized = Math.max(0, 1 - distanceKm / maxRadiusKm);
   return normalized * 100;
 }

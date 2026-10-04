@@ -9,9 +9,14 @@ const LOCATION_THROTTLE_MS = 5000;
 const locationThrottle = new Map(); // key: `${donorId}:${requestId}`
 
 function initSocketIO(httpServer) {
+  const allowedOrigins = (config.frontendUrl || '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   const io = new Server(httpServer, {
     cors: {
-      origin: config.frontendUrl,
+      origin: allowedOrigins,
       methods: ['GET', 'POST'],
       credentials: true,
     },

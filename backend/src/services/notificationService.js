@@ -1,6 +1,19 @@
 const prisma = require('../config/database');
 const { sendPushNotification } = require('../config/firebase');
 
+// Map NotificationType enum → NotificationPreference model field
+const NOTIFICATION_PREF_MAP = {
+  EMERGENCY_REQUEST: 'emergencyAlerts',
+  APPOINTMENT_CONFIRMATION: 'appointmentReminders',
+  APPOINTMENT_REMINDER: 'appointmentReminders',
+  CAMP_REMINDER: 'campReminders',
+  REQUEST_CANCELLED: 'requestUpdates',
+  REQUEST_FULFILLED: 'requestUpdates',
+  ACCOUNT_UPDATE: 'accountUpdates',
+  VERIFICATION_UPDATE: 'accountUpdates',
+  GENERAL: 'accountUpdates',
+};
+
 async function registerDeviceToken(userId, token, deviceInfo) {
   return prisma.deviceToken.upsert({
     where: { token },
@@ -29,7 +42,8 @@ async function createNotification(userId, type, title, body, data = {}) {
   });
 
   const prefs = await prisma.notificationPreference.findUnique({ where: { userId } });
-  const shouldPush = !prefs || prefs[type.toLowerCase()] !== false;
+  const prefKey = NOTIFICATION_PREF_MAP[type];
+  const shouldPush = !prefs || !prefKey || prefs[prefKey] !== false;
 
   if (shouldPush) {
     const tokens = await getUserTokens(userId);

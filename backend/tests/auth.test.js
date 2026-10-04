@@ -10,7 +10,8 @@ jest.mock('../src/config/database', () => ({
 const prisma = require('../src/config/database');
 const { generateToken, verifyToken, authenticate, authorize } = require('../src/middleware/auth');
 
-const JWT_SECRET = 'dev-secret-change-me';
+const config = require('../src/config');
+const JWT_SECRET = config.jwt.secret;
 
 describe('Auth Middleware', () => {
   // ─── Token generation / verification ─────────────────────────────────────────

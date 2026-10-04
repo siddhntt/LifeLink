@@ -6,7 +6,14 @@ importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js');
 
 try {
-  const config = self.FIREBASE_CONFIG || {};
+  const config = self.FIREBASE_CONFIG || {
+    apiKey: 'AIzaSyDo17iBbNevyrrY4q-e94xt_AduYX9q9Rw',
+    authDomain: 'lifelink-dd55b.firebaseapp.com',
+    projectId: 'lifelink-dd55b',
+    storageBucket: 'lifelink-dd55b.firebasestorage.app',
+    messagingSenderId: '906188242623',
+    appId: '1:906188242623:web:e3e181e0a02cc076f9900a',
+  };
   const projectId = config.projectId;
 
   // Only initialize if we actually have a projectId — avoids crashing in dev/demo

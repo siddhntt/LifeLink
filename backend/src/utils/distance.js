@@ -5,7 +5,16 @@ function toRad(deg) {
 }
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
-  if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
+  if (
+    lat1 === null ||
+    lat1 === undefined ||
+    lon1 === null ||
+    lon1 === undefined ||
+    lat2 === null ||
+    lat2 === undefined ||
+    lon2 === null ||
+    lon2 === undefined
+  ) {
     return null;
   }
 
@@ -19,7 +28,7 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 }
 
 function formatDistance(km) {
-  if (km == null) return 'Unknown';
+  if (km === null || km === undefined) return 'Unknown';
   if (km < 1) return `${Math.round(km * 1000)} m`;
   return `${km.toFixed(1)} km`;
 }
