@@ -17,6 +17,20 @@ function emitEmergencyEvent(requestId, event, data) {
   }
 }
 
+// Emit to a specific user's personal room (for real-time notifications)
+function emitToUser(userId, event, data) {
+  if (io) {
+    io.to(`user:${userId}`).emit(event, data);
+  }
+}
+
+// Emit to a hospital's room (for real-time dashboard/request list updates)
+function emitToHospital(hospitalId, event, data) {
+  if (io) {
+    io.to(`hospital:${hospitalId}`).emit(event, data);
+  }
+}
+
 async function getRadiusStages() {
   const stages = await prisma.emergencyRadiusConfig.findMany({
     where: { isActive: true },
@@ -75,14 +89,25 @@ async function notifyDonors(emergency, donors, radiusKm, radiusStage) {
       );
     }
 
+    const notifTitle = 'Emergency Blood Required';
+    const notifBody = `${BLOOD_GROUP_LABELS[emergency.bloodGroup]} blood needed urgently. Approx. ${formatDistance(donor.distanceKm)} away.`;
+
     await prisma.notification.create({
       data: {
         userId: donor.userId,
         type: 'EMERGENCY_REQUEST',
-        title: 'Emergency Blood Required',
-        body: `${BLOOD_GROUP_LABELS[emergency.bloodGroup]} blood needed urgently. Approx. ${formatDistance(donor.distanceKm)} away.`,
+        title: notifTitle,
+        body: notifBody,
         data: { emergencyRequestId: emergency.id },
       },
+    });
+
+    // Push real-time notification to donor's browser via socket
+    emitToUser(donor.userId, 'notification:new', {
+      title: notifTitle,
+      body: notifBody,
+      type: 'EMERGENCY_REQUEST',
+      emergencyRequestId: emergency.id,
     });
 
     notified.push(response);
@@ -98,6 +123,13 @@ async function notifyDonors(emergency, donors, radiusKm, radiusStage) {
   });
 
   emitEmergencyEvent(emergency.id, 'emergency:notification-sent', {
+    requestId: emergency.id,
+    count: notified.length,
+    radiusKm,
+    radiusStage,
+  });
+
+  emitToHospital(emergency.hospitalId, 'emergency:notification-sent', {
     requestId: emergency.id,
     count: notified.length,
     radiusKm,
@@ -234,6 +266,13 @@ async function expandRadius(emergencyRequestId, currentStage) {
     stage: currentStage + 1,
   });
 
+  emitToHospital(emergency.hospitalId, 'emergency:radius-expanded', {
+    requestId: emergencyRequestId,
+    fromRadiusKm: prevRadius,
+    toRadiusKm: nextStage.radiusKm,
+    stage: currentStage + 1,
+  });
+
   const notified = await searchAndNotify(
     emergency,
     prevRadius,
@@ -342,10 +381,24 @@ async function handleDonorResponse(emergencyRequestId, donorProfileId, response)
         requestId: emergencyRequestId,
         acceptedUnits: newAccepted,
       });
+
+      emitToHospital(emergency.hospitalId, 'emergency:fulfilled', {
+        requestId: emergencyRequestId,
+        acceptedUnits: newAccepted,
+      });
     }
   }
 
   emitEmergencyEvent(emergencyRequestId, 'emergency:donor-response', {
+    requestId: emergencyRequestId,
+    donorProfileId,
+    response,
+    donorName: updated.donorProfile.user.fullName,
+    responseTimeMs,
+  });
+
+  // Also emit to the hospital's room so they get updates on any page (not just detail view)
+  emitToHospital(emergency.hospitalId, 'emergency:donor-response', {
     requestId: emergencyRequestId,
     donorProfileId,
     response,

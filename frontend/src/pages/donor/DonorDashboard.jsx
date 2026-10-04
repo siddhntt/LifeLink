@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { donorAPI } from '../../services/endpoints';
+import { useSocketReload } from '../../context/SocketContext';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import StatusBadge from '../../components/StatusBadge';
 import LoadingSpinner, { EmptyState } from '../../components/LoadingSpinner';
@@ -12,11 +13,14 @@ export default function DonorDashboard() {
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
 
-  const load = () => {
+  const load = useCallback(() => {
     donorAPI.getDashboard().then(({ data: res }) => setData(res.data)).finally(() => setLoading(false));
-  };
+  }, []);
 
-  useEffect(load, []);
+  useEffect(load, [load]);
+
+  // Auto-refresh when new emergency notification arrives
+  useSocketReload(['notification:new'], load);
 
   const toggleAvailability = async () => {
     if (!data?.profile) return;

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { emergencyAPI } from '../../services/endpoints';
+import { useSocketReload } from '../../context/SocketContext';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import StatusBadge from '../../components/StatusBadge';
 import LoadingSpinner, { EmptyState } from '../../components/LoadingSpinner';
@@ -11,9 +12,14 @@ export default function HospitalRequests() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     emergencyAPI.list().then(({ data }) => setRequests(data.data)).finally(() => setLoading(false));
   }, []);
+
+  useEffect(load, [load]);
+
+  // Auto-refresh when donor responses or status changes come in
+  useSocketReload(['emergency:donor-response', 'emergency:fulfilled', 'emergency:notification-sent', 'emergency:radius-expanded'], load);
 
   if (loading) return <DashboardLayout><LoadingSpinner /></DashboardLayout>;
 

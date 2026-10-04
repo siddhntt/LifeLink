@@ -1,10 +1,10 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { io } from 'socket.io-client';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { emergencyAPI } from '../../services/endpoints';
+import { useSocket } from '../../context/SocketContext';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import StatusBadge from '../../components/StatusBadge';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -45,8 +45,6 @@ const DONOR_ICON = new L.Icon({
   popupAnchor: [0, -50],
 });
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
-
 function haversineKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -76,19 +74,19 @@ function FitBounds({ hospital, donor }) {
 export default function EmergencyRequestDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { on, emit } = useSocket();
   const [request, setRequest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updatingResponse, setUpdatingResponse] = useState(null);
 
   // Live tracking state
-  const [donorLocation, setDonorLocation] = useState(null); // { latitude, longitude, donorProfileId, timestamp }
-  const [trackingStatus, setTrackingStatus] = useState('waiting'); // waiting | active | stopped
+  const [donorLocation, setDonorLocation] = useState(null);
+  const [trackingStatus, setTrackingStatus] = useState('waiting');
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
-  const socketRef = useRef(null);
 
-  const load = () => {
+  const load = useCallback(() => {
     emergencyAPI.get(id).then(({ data }) => setRequest(data.data)).finally(() => setLoading(false));
-  };
+  }, [id]);
 
   // Fetch snapshot of last known location on page load
   useEffect(() => {
@@ -105,24 +103,22 @@ export default function EmergencyRequestDetail() {
       .catch(() => {}); // not critical
   }, [id]);
 
+  // Initial load + socket event subscriptions
   useEffect(() => {
     load();
-    const token = localStorage.getItem('lifelink_token');
-    if (token) {
-      const socket = io(SOCKET_URL, { auth: { token } });
-      socketRef.current = socket;
 
-      socket.emit('join-emergency', id);
+    // Join the emergency-specific room
+    emit('join-emergency', id);
 
-      // Existing emergency event handlers
-      socket.on('emergency:donor-response', load);
-      socket.on('emergency:notification-sent', load);
-      socket.on('emergency:radius-expanded', load);
-      socket.on('emergency:fulfilled', load);
-      socket.on('emergency:cancelled', load);
-
+    // Subscribe to emergency events via global socket
+    const unsubs = [
+      on('emergency:donor-response', (data) => { if (data.requestId === id) load(); }),
+      on('emergency:notification-sent', (data) => { if (data.requestId === id) load(); }),
+      on('emergency:radius-expanded', (data) => { if (data.requestId === id) load(); }),
+      on('emergency:fulfilled', (data) => { if (data.requestId === id) load(); }),
+      on('emergency:cancelled', (data) => { if (data.requestId === id) load(); }),
       // Live location events
-      socket.on('donor:location-update', (data) => {
+      on('donor:location-update', (data) => {
         if (data.requestId === id) {
           setDonorLocation({
             latitude: data.latitude,
@@ -133,16 +129,19 @@ export default function EmergencyRequestDetail() {
           setTrackingStatus('active');
           setLastUpdateTime(new Date(data.timestamp));
         }
-      });
-
-      socket.on('donor:location-stopped', (data) => {
+      }),
+      on('donor:location-stopped', (data) => {
         if (data.requestId === id) {
           setTrackingStatus('stopped');
         }
-      });
-    }
-    return () => socketRef.current?.disconnect();
-  }, [id]);
+      }),
+    ];
+
+    return () => {
+      emit('leave-emergency', id);
+      unsubs.forEach((u) => u());
+    };
+  }, [id, load, on, emit]);
 
   const cancel = async () => {
     if (!confirm('Cancel this emergency request?')) return;

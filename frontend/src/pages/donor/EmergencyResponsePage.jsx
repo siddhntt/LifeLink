@@ -1,13 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { io } from 'socket.io-client';
 import { emergencyAPI } from '../../services/endpoints';
+import { useSocket } from '../../context/SocketContext';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { BLOOD_GROUP_LABELS, formatDateTime } from '../../utils/constants';
 import { MapPin, Navigation, WifiOff, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 const THROTTLE_MS = 7000;       // send location every ~7s
 const MIN_DISTANCE_M = 30;      // or when moved at least 30 metres
 
@@ -46,6 +45,7 @@ const STATUS_UI = {
 export default function EmergencyResponsePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { on, emit, connected } = useSocket();
   const [request, setRequest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [responding, setResponding] = useState(false);
@@ -53,7 +53,6 @@ export default function EmergencyResponsePage() {
   const [trackingStatus, setTrackingStatus] = useState(STATUS.IDLE);
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
 
-  const socketRef = useRef(null);
   const watchIdRef = useRef(null);
   const lastPositionRef = useRef(null);
   const lastSentTimeRef = useRef(0);
@@ -71,56 +70,43 @@ export default function EmergencyResponsePage() {
     }).finally(() => setLoading(false));
   }, [id]);
 
-  // Socket setup
+  // Listen for socket tracking events
   useEffect(() => {
-    const token = localStorage.getItem('lifelink_token');
-    if (!token) return;
+    const unsubs = [
+      on('donor:tracking-joined', () => {
+        console.log('[Tracking] Joined emergency room');
+      }),
+      on('donor:tracking-stopped', ({ reason }) => {
+        stopTracking();
+        alert(reason || 'Tracking stopped');
+      }),
+      on('error', (err) => {
+        console.error('[Socket] Error:', err.message);
+      }),
+    ];
 
-    const socket = io(SOCKET_URL, { auth: { token }, autoConnect: true });
-    socketRef.current = socket;
+    return () => unsubs.forEach((u) => u());
+  }, [on]);
 
-    socket.on('connect', () => {
-      if (trackingStatus === STATUS.DISCONNECTED) {
-        setTrackingStatus(STATUS.ACTIVE);
-      }
-    });
-
-    socket.on('disconnect', () => {
-      if (trackingStatus === STATUS.ACTIVE) {
-        setTrackingStatus(STATUS.DISCONNECTED);
-      }
-    });
-
-    socket.on('donor:tracking-joined', () => {
-      console.log('[Tracking] Joined emergency room');
-    });
-
-    socket.on('donor:tracking-stopped', ({ reason }) => {
-      stopTracking();
-      alert(reason || 'Tracking stopped');
-    });
-
-    socket.on('error', (err) => {
-      console.error('[Socket] Error:', err.message);
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, []); // only on mount
+  // Track connection status changes
+  useEffect(() => {
+    if (!connected && trackingStatus === STATUS.ACTIVE) {
+      setTrackingStatus(STATUS.DISCONNECTED);
+    } else if (connected && trackingStatus === STATUS.DISCONNECTED) {
+      setTrackingStatus(STATUS.ACTIVE);
+    }
+  }, [connected, trackingStatus]);
 
   const stopTracking = useCallback(() => {
     if (watchIdRef.current !== null) {
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
     }
-    if (socketRef.current?.connected) {
-      socketRef.current.emit('donor:location-stop', { requestId: id });
-    }
+    emit('donor:location-stop', { requestId: id });
     lastPositionRef.current = null;
     lastSentTimeRef.current = 0;
     setTrackingStatus(STATUS.STOPPED);
-  }, [id]);
+  }, [id, emit]);
 
   const startTracking = useCallback(() => {
     if (!navigator.geolocation) {
@@ -131,9 +117,7 @@ export default function EmergencyResponsePage() {
     setTrackingStatus(STATUS.REQUESTING);
 
     // Join the socket room first
-    if (socketRef.current) {
-      socketRef.current.emit('donor:join-tracking', id);
-    }
+    emit('donor:join-tracking', id);
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
@@ -152,8 +136,8 @@ export default function EmergencyResponsePage() {
         lastSentTimeRef.current = now;
         lastPositionRef.current = { latitude, longitude };
 
-        if (socketRef.current?.connected) {
-          socketRef.current.emit('donor:location-update', {
+        if (connected) {
+          emit('donor:location-update', {
             requestId: id,
             latitude,
             longitude,

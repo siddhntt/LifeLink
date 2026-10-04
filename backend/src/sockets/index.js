@@ -46,6 +46,31 @@ function initSocketIO(httpServer) {
   io.on('connection', (socket) => {
     console.log(`[Socket] User connected: ${socket.user.id} (${socket.user.role})`);
 
+    // ─── Auto-join personal notification room ────────────────────────────
+    // This allows the server to push notifications to specific users
+    socket.join(`user:${socket.user.id}`);
+
+    // ─── User joins their own room explicitly (from client) ──────────────
+    socket.on('join-user', (userId) => {
+      if (userId === socket.user.id) {
+        socket.join(`user:${userId}`);
+      }
+    });
+
+    // ─── Hospital auto-joins their hospital room ─────────────────────────
+    // This allows broadcasting emergency updates to the hospital across all pages
+    if (socket.user.role === 'HOSPITAL') {
+      // Look up the hospital ID and join that room
+      prisma.hospital.findUnique({ where: { userId: socket.user.id } })
+        .then((hospital) => {
+          if (hospital) {
+            socket.join(`hospital:${hospital.id}`);
+            socket.hospitalId = hospital.id;
+          }
+        })
+        .catch(() => {});
+    }
+
     // ─── Hospital / Admin joins emergency room to receive updates ───────────
     socket.on('join-emergency', (requestId) => {
       if (['HOSPITAL', 'ADMIN'].includes(socket.user.role)) {

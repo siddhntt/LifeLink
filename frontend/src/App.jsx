@@ -1,6 +1,10 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, useCallback } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useFCM } from './hooks/useFCM';
+import { useSocket } from './context/SocketContext';
+import { useToast } from './context/ToastContext';
+import { useAuth } from './context/AuthContext';
 
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -42,15 +46,76 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminVerification from './pages/admin/AdminVerification';
 import AdminFlaggedEmergencies from './pages/admin/AdminFlaggedEmergencies';
 
-function FCMInitializer() {
+function GlobalSocketListener() {
   useFCM();
+  const { on } = useSocket();
+  const { addToast } = useToast();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) return;
+
+    const unsubs = [];
+
+    // ─── Notification received (from server push) ─────────────────────────
+    unsubs.push(on('notification:new', (data) => {
+      addToast({
+        title: data.title || 'New Notification',
+        body: data.body,
+        type: data.type === 'EMERGENCY_REQUEST' ? 'emergency' : 'notification',
+        link: data.emergencyRequestId
+          ? `/donor/emergency/${data.emergencyRequestId}`
+          : '/donor/notifications',
+        duration: data.type === 'EMERGENCY_REQUEST' ? 15000 : 6000,
+      });
+    }));
+
+    // ─── Emergency events (for hospital users watching their requests) ────
+    unsubs.push(on('emergency:donor-response', (data) => {
+      if (user.role === 'HOSPITAL') {
+        const action = data.response === 'ACCEPTED' ? '✅ accepted' : '❌ declined';
+        addToast({
+          title: `Donor ${action} your request`,
+          body: `${data.donorName} responded in ${Math.round(data.responseTimeMs / 1000)}s`,
+          type: data.response === 'ACCEPTED' ? 'success' : 'info',
+          link: `/hospital/requests/${data.requestId}`,
+        });
+      }
+    }));
+
+    unsubs.push(on('emergency:fulfilled', (data) => {
+      if (user.role === 'HOSPITAL') {
+        addToast({
+          title: '🎉 Emergency Request Fulfilled!',
+          body: `All ${data.acceptedUnits} required units have been accepted.`,
+          type: 'success',
+          link: `/hospital/requests/${data.requestId}`,
+          duration: 10000,
+        });
+      }
+    }));
+
+    unsubs.push(on('emergency:radius-expanded', (data) => {
+      if (user.role === 'HOSPITAL') {
+        addToast({
+          title: 'Search Radius Expanded',
+          body: `Expanded from ${data.fromRadiusKm} km to ${data.toRadiusKm} km (Stage ${data.stage})`,
+          type: 'info',
+          link: `/hospital/requests/${data.requestId}`,
+        });
+      }
+    }));
+
+    return () => unsubs.forEach((u) => u());
+  }, [user, on, addToast]);
+
   return null;
 }
 
 export default function App() {
   return (
     <>
-      <FCMInitializer />
+      <GlobalSocketListener />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />

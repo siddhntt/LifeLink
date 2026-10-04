@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef } from 'react';
-import { io } from 'socket.io-client';
-import { hospitalAPI, emergencyAPI } from '../../services/endpoints';
+import { useEffect, useState, useCallback } from 'react';
+import { hospitalAPI } from '../../services/endpoints';
+import { useSocketReload } from '../../context/SocketContext';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import StatusBadge from '../../components/StatusBadge';
 import LoadingSpinner, { EmptyState } from '../../components/LoadingSpinner';
@@ -8,29 +8,18 @@ import { BLOOD_GROUP_LABELS, formatDateTime } from '../../utils/constants';
 import { AlertTriangle, Plus, Radio } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
-
 export default function HospitalDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const socketRef = useRef(null);
 
-  const load = () => {
+  const load = useCallback(() => {
     hospitalAPI.getDashboard().then(({ data: res }) => setData(res.data)).finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    load();
-    const token = localStorage.getItem('lifelink_token');
-    if (token) {
-      socketRef.current = io(SOCKET_URL, { auth: { token } });
-      socketRef.current.on('emergency:donor-response', load);
-      socketRef.current.on('emergency:notification-sent', load);
-      socketRef.current.on('emergency:radius-expanded', load);
-      socketRef.current.on('emergency:fulfilled', load);
-    }
-    return () => socketRef.current?.disconnect();
   }, []);
+
+  useEffect(load, [load]);
+
+  // Auto-refresh when emergency events come in via socket (hospital room)
+  useSocketReload(['emergency:donor-response', 'emergency:notification-sent', 'emergency:radius-expanded', 'emergency:fulfilled'], load);
 
   if (loading) return <DashboardLayout><LoadingSpinner /></DashboardLayout>;
 

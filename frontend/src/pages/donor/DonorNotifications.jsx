@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { notificationAPI } from '../../services/endpoints';
+import { useSocketReload } from '../../context/SocketContext';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import LoadingSpinner, { EmptyState } from '../../components/LoadingSpinner';
 import { formatDateTime } from '../../utils/constants';
@@ -9,7 +10,7 @@ export default function DonorNotifications() {
   const [prefs, setPrefs] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const load = () => {
+  const load = useCallback(() => {
     Promise.all([
       notificationAPI.list(),
       notificationAPI.getPreferences(),
@@ -17,9 +18,12 @@ export default function DonorNotifications() {
       setNotifications(n.data.data.notifications || n.data.data);
       setPrefs(p.data.data);
     }).finally(() => setLoading(false));
-  };
+  }, []);
 
-  useEffect(load, []);
+  useEffect(load, [load]);
+
+  // Auto-reload when new notification arrives via socket
+  useSocketReload(['notification:new'], load);
 
   const markRead = async (id) => {
     await notificationAPI.markRead(id);
