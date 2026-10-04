@@ -73,20 +73,43 @@ function GlobalSocketListener() {
     // ─── Emergency events (for hospital users watching their requests) ────
     unsubs.push(on('emergency:donor-response', (data) => {
       if (user.role === 'HOSPITAL') {
-        const action = data.response === 'ACCEPTED' ? '✅ accepted' : '❌ declined';
-        addToast({
-          title: `Donor ${action} your request`,
-          body: `${data.donorName} responded in ${Math.round(data.responseTimeMs / 1000)}s`,
-          type: data.response === 'ACCEPTED' ? 'success' : 'info',
-          link: `/hospital/requests/${data.requestId}`,
-        });
+        const timeStr = data.responseTimeMs ? ` in ${Math.round(data.responseTimeMs / 1000)}s` : '';
+        if (data.response === 'ACCEPTED') {
+          addToast({
+            title: 'Donor Accepted Request',
+            body: `${data.donorName} accepted${timeStr} and is on the way`,
+            type: 'success',
+            link: `/hospital/requests/${data.requestId}`,
+          });
+        } else if (data.response === 'REJECTED') {
+          addToast({
+            title: 'Donor Declined Request',
+            body: `${data.donorName} declined the request${timeStr}`,
+            type: 'info',
+            link: `/hospital/requests/${data.requestId}`,
+          });
+        } else if (data.response === 'ARRIVED') {
+          addToast({
+            title: 'Donor Arrived',
+            body: `${data.donorName} has arrived at the hospital`,
+            type: 'info',
+            link: `/hospital/requests/${data.requestId}`,
+          });
+        } else if (data.response === 'DONATION_COMPLETED') {
+          addToast({
+            title: 'Donation Completed',
+            body: `Blood donation completed for ${data.donorName}`,
+            type: 'success',
+            link: `/hospital/requests/${data.requestId}`,
+          });
+        }
       }
     }));
 
     unsubs.push(on('emergency:fulfilled', (data) => {
       if (user.role === 'HOSPITAL') {
         addToast({
-          title: '🎉 Emergency Request Fulfilled!',
+          title: 'Emergency Request Fulfilled!',
           body: `All ${data.acceptedUnits} required units have been accepted.`,
           type: 'success',
           link: `/hospital/requests/${data.requestId}`,

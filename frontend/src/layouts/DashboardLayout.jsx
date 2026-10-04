@@ -50,7 +50,7 @@ export default function DashboardLayout({ children }) {
   useEffect(() => {
     notificationAPI.list({ unreadOnly: true, limit: 1 })
       .then(({ data }) => setUnreadCount(data.data?.total || 0))
-      .catch(() => {});
+      .catch(() => { });
   }, [location.pathname]);
 
   return (
@@ -70,11 +70,10 @@ export default function DashboardLayout({ children }) {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
+                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive
+                    ? 'bg-primary-50 text-primary-700'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
                 >
                   {item.label}
                 </Link>
@@ -119,11 +118,10 @@ export default function DashboardLayout({ children }) {
                   key={item.to}
                   to={item.to}
                   onClick={() => setMobileOpen(false)}
-                  className={`block rounded-lg px-3 py-2 text-sm font-medium ${
-                    isActive
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
+                  className={`block rounded-lg px-3 py-2 text-sm font-medium ${isActive
+                    ? 'bg-primary-50 text-primary-700'
+                    : 'text-gray-600 hover:bg-gray-100'
+                    }`}
                 >
                   {item.label}
                 </Link>

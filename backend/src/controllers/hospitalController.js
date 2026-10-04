@@ -111,17 +111,17 @@ async function getEmergencyRequest(req, res) {
 
   const donorInclude = role === 'DONOR'
     ? {
-        where: { donorProfileId: donorProfile?.id },
-        include: { donorProfile: { select: { id: true } } },
-      }
+      where: { donorProfileId: donorProfile?.id },
+      include: { donorProfile: { select: { id: true } } },
+    }
     : {
-        include: {
-          donorProfile: {
-            include: { user: { select: { fullName: true, phone: true } } },
-          },
+      include: {
+        donorProfile: {
+          include: { user: { select: { fullName: true, phone: true } } },
         },
-        orderBy: { priorityScore: 'desc' },
-      };
+      },
+      orderBy: { priorityScore: 'desc' },
+    };
 
   const request = await prisma.emergencyRequest.findFirst({
     where,
