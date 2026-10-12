@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { emergencyAPI } from '../../services/endpoints';
@@ -316,6 +316,15 @@ export default function EmergencyRequestDetail() {
                     </Popup>
                   </Marker>
                 )}
+                {donorLocation && hospitalPos && (
+                  <Polyline
+                    positions={[
+                      [hospitalPos.latitude, hospitalPos.longitude],
+                      [donorLocation.latitude, donorLocation.longitude],
+                    ]}
+                    pathOptions={{ color: '#2563eb', weight: 3, dashArray: '8 6', opacity: 0.7 }}
+                  />
+                )}
               </MapContainer>
             </div>
           ) : (
@@ -392,6 +401,15 @@ export default function EmergencyRequestDetail() {
                     className="rounded-lg bg-teal-600 px-3 py-1 text-xs text-white hover:bg-teal-700 disabled:opacity-50"
                   >
                     {updatingResponse === r.id ? '...' : 'Mark Arrived'}
+                  </button>
+                )}
+                {r.status === 'ACCEPTED' && (
+                  <button
+                    onClick={() => { if (confirm('Mark this donor as No-Show? This will free up the accepted unit.')) updateDonorStatus(r.id, 'NO_SHOW'); }}
+                    disabled={updatingResponse === r.id}
+                    className="rounded-lg border border-red-300 px-3 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    {updatingResponse === r.id ? '...' : 'No-Show'}
                   </button>
                 )}
                 {r.status === 'ARRIVED' && (

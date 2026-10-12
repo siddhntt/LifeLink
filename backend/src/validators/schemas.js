@@ -144,7 +144,7 @@ const bloodSearchSchema = z.object({
   bloodGroup: bloodGroupEnum,
   latitude: z.coerce.number().min(-90).max(90),
   longitude: z.coerce.number().min(-180).max(180),
-  radiusKm: z.coerce.number().min(1).max(200).default(50),
+  radiusKm: z.coerce.number().min(1).max(500).default(50),
 });
 
 const bloodRequestSchema = z.object({
@@ -175,7 +175,7 @@ const donationRecordSchema = z.object({
 });
 
 const donorStatusUpdateSchema = z.object({
-  status: z.enum(['ARRIVED', 'DONATION_COMPLETED']),
+  status: z.enum(['ARRIVED', 'DONATION_COMPLETED', 'NO_SHOW']),
 });
 
 const nearbySchema = z.object({

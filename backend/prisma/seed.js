@@ -10,19 +10,19 @@ const prisma = new PrismaClient({ adapter });
 
 // ─── Locations around IIIT Naya Raipur ──────────────────────────────────────────
 const PLACES = {
-  IIIT_NR:       { city: 'Naya Raipur',  state: 'Chhattisgarh', lat: 21.1291, lng: 81.7656 },
-  ATAL_NAGAR:    { city: 'Naya Raipur',  state: 'Chhattisgarh', lat: 21.1350, lng: 81.7700 },
-  RAIPUR_CITY:   { city: 'Raipur',       state: 'Chhattisgarh', lat: 21.2514, lng: 81.6296 },
-  RAIPUR_SOUTH:  { city: 'Raipur',       state: 'Chhattisgarh', lat: 21.2200, lng: 81.6400 },
-  BHILAI:        { city: 'Bhilai',       state: 'Chhattisgarh', lat: 21.2167, lng: 81.4333 },
-  DURG:          { city: 'Durg',         state: 'Chhattisgarh', lat: 21.1900, lng: 81.2800 },
-  BILASPUR:      { city: 'Bilaspur',     state: 'Chhattisgarh', lat: 22.0796, lng: 82.1391 },
+  IIIT_NR: { city: 'Naya Raipur', state: 'Chhattisgarh', lat: 21.1291, lng: 81.7656 },
+  ATAL_NAGAR: { city: 'Naya Raipur', state: 'Chhattisgarh', lat: 21.1350, lng: 81.7700 },
+  RAIPUR_CITY: { city: 'Raipur', state: 'Chhattisgarh', lat: 21.2514, lng: 81.6296 },
+  RAIPUR_SOUTH: { city: 'Raipur', state: 'Chhattisgarh', lat: 21.2200, lng: 81.6400 },
+  BHILAI: { city: 'Bhilai', state: 'Chhattisgarh', lat: 21.2167, lng: 81.4333 },
+  DURG: { city: 'Durg', state: 'Chhattisgarh', lat: 21.1900, lng: 81.2800 },
+  BILASPUR: { city: 'Bilaspur', state: 'Chhattisgarh', lat: 22.0796, lng: 82.1391 },
 };
 
 const ALL_BG = ['A_POS', 'A_NEG', 'B_POS', 'B_NEG', 'AB_POS', 'AB_NEG', 'O_POS', 'O_NEG'];
 
 function jitter(v, r = 0.015) { return v + (Math.random() - 0.5) * 2 * r; }
-function daysAgo(d)     { return new Date(Date.now() - d * 864e5); }
+function daysAgo(d) { return new Date(Date.now() - d * 864e5); }
 function daysFromNow(d) { return new Date(Date.now() + d * 864e5); }
 
 async function cleanup() {
@@ -81,7 +81,7 @@ async function main() {
 
   await prisma.emergencyRadiusConfig.createMany({
     data: [
-      { stage: 0, radiusKm: 5,  responseWaitMs: 300000 },
+      { stage: 0, radiusKm: 5, responseWaitMs: 300000 },
       { stage: 1, radiusKm: 10, responseWaitMs: 300000 },
       { stage: 2, radiusKm: 20, responseWaitMs: 300000 },
       { stage: 3, radiusKm: 50, responseWaitMs: 300000 },
@@ -105,34 +105,36 @@ async function main() {
     },
   });
 
-  console.log('  ✦ 20 donors...');
+  console.log('  ✦ 21 donors...');
   const DONOR_LIST = [
     // --- Naya Raipur / IIIT campus area ---
-    { name: 'Aarav Sahu',       gender: 'MALE',   bg: 'O_POS',  place: 'IIIT_NR',      age: 21, avail: true,  elig: 'ELIGIBLE',                 donations: 2,  weight: 62, lastDon: 120, note: 'Eligible — last donated 120 days ago (past cooldown)' },
-    { name: 'Priya Verma',      gender: 'FEMALE', bg: 'A_POS',  place: 'IIIT_NR',      age: 22, avail: true,  elig: 'TEMPORARILY_UNAVAILABLE',  donations: 1,  weight: 55, lastDon: 30,  note: 'COOLDOWN — donated 30 days ago (needs 60 more days)' },
-    { name: 'Kunal Soni',       gender: 'MALE',   bg: 'B_POS',  place: 'IIIT_NR',      age: 20, avail: true,  elig: 'TEMPORARILY_UNAVAILABLE',  donations: 0,  weight: 42, lastDon: null, note: 'UNDERWEIGHT — 42 kg (min 45 kg)' },
-    { name: 'Shruti Dubey',     gender: 'FEMALE', bg: 'O_NEG',  place: 'IIIT_NR',      age: 21, avail: true,  elig: 'ELIGIBLE',                 donations: 1,  weight: 52, lastDon: 100, note: 'Eligible — rare O- donor' },
-    { name: 'Harsh Prajapati',  gender: 'MALE',   bg: 'A_NEG',  place: 'IIIT_NR',      age: 23, avail: true,  elig: 'ELIGIBLE',                 donations: 3,  weight: 70, lastDon: 95,  note: 'Eligible — past cooldown' },
+    { name: 'Aarav Sahu', gender: 'MALE', bg: 'O_POS', place: 'IIIT_NR', age: 21, avail: true, elig: 'ELIGIBLE', donations: 2, weight: 62, lastDon: 120, note: 'Eligible — last donated 120 days ago (past cooldown)' },
+    { name: 'Priya Verma', gender: 'FEMALE', bg: 'A_POS', place: 'IIIT_NR', age: 22, avail: true, elig: 'TEMPORARILY_UNAVAILABLE', donations: 1, weight: 55, lastDon: 30, note: 'COOLDOWN — donated 30 days ago (needs 60 more days)' },
+    { name: 'Kunal Soni', gender: 'MALE', bg: 'B_POS', place: 'IIIT_NR', age: 20, avail: true, elig: 'TEMPORARILY_UNAVAILABLE', donations: 0, weight: 42, lastDon: null, note: 'UNDERWEIGHT — 42 kg (min 45 kg)' },
+    { name: 'Shruti Dubey', gender: 'FEMALE', bg: 'O_NEG', place: 'IIIT_NR', age: 21, avail: true, elig: 'ELIGIBLE', donations: 1, weight: 52, lastDon: 100, note: 'Eligible — rare O- donor' },
+    { name: 'Harsh Prajapati', gender: 'MALE', bg: 'A_NEG', place: 'IIIT_NR', age: 23, avail: true, elig: 'ELIGIBLE', donations: 3, weight: 70, lastDon: 95, note: 'Eligible — past cooldown' },
     // --- Atal Nagar / near Sadbhavna & BALCO ---
-    { name: 'Rohit Tiwari',     gender: 'MALE',   bg: 'B_POS',  place: 'ATAL_NAGAR',   age: 24, avail: true,  elig: 'ELIGIBLE',                 donations: 4,  weight: 68, lastDon: 150, note: 'Eligible' },
-    { name: 'Sneha Rajput',     gender: 'FEMALE', bg: 'AB_POS', place: 'ATAL_NAGAR',   age: 20, avail: true,  elig: 'ELIGIBLE',                 donations: 0,  weight: 50, lastDon: null, note: 'Eligible — first-time donor' },
-    { name: 'Manish Chandel',   gender: 'MALE',   bg: 'O_POS',  place: 'ATAL_NAGAR',   age: 28, avail: true,  elig: 'ELIGIBLE',                 donations: 5,  weight: 75, lastDon: 200, note: 'ACTIVE EMERGENCY — already responding to another request', activeEmg: true },
-    { name: 'Pooja Sahu',       gender: 'FEMALE', bg: 'B_NEG',  place: 'ATAL_NAGAR',   age: 25, avail: false, elig: 'ELIGIBLE',                 donations: 2,  weight: 53, lastDon: 180, note: 'NOT AVAILABLE — toggled off by donor' },
+    { name: 'Rohit Tiwari', gender: 'MALE', bg: 'B_POS', place: 'ATAL_NAGAR', age: 24, avail: true, elig: 'ELIGIBLE', donations: 4, weight: 68, lastDon: 150, note: 'Eligible' },
+    { name: 'Sneha Rajput', gender: 'FEMALE', bg: 'AB_POS', place: 'ATAL_NAGAR', age: 20, avail: true, elig: 'ELIGIBLE', donations: 0, weight: 50, lastDon: null, note: 'Eligible — first-time donor' },
+    { name: 'Manish Chandel', gender: 'MALE', bg: 'O_POS', place: 'ATAL_NAGAR', age: 28, avail: true, elig: 'ELIGIBLE', donations: 5, weight: 75, lastDon: 200, note: 'ACTIVE EMERGENCY — already responding to another request', activeEmg: true },
+    { name: 'Pooja Sahu', gender: 'FEMALE', bg: 'B_NEG', place: 'ATAL_NAGAR', age: 25, avail: false, elig: 'ELIGIBLE', donations: 2, weight: 53, lastDon: 180, note: 'NOT AVAILABLE — toggled off by donor' },
+    // --- ~6.5 km from Sadbhavna Hospital (Stage 1: 5–10 km demo) ---
+    { name: 'Arjun Kashyap', gender: 'MALE', bg: 'O_POS', place: 'ATAL_NAGAR', age: 26, avail: true, elig: 'ELIGIBLE', donations: 2, weight: 66, lastDon: 130, note: 'Eligible — placed ~6.5 km from Sadbhavna for Stage 0→1 expansion demo', customLat: 21.175, customLng: 81.755 },
     // --- Raipur city ---
-    { name: 'Amit Sharma',      gender: 'MALE',   bg: 'O_NEG',  place: 'RAIPUR_CITY',  age: 32, avail: true,  elig: 'ELIGIBLE',                 donations: 8,  weight: 78, lastDon: 100, note: 'Eligible — veteran donor, rare O-' },
-    { name: 'Kavya Patel',      gender: 'FEMALE', bg: 'A_NEG',  place: 'RAIPUR_CITY',  age: 28, avail: false, elig: 'ELIGIBLE',                 donations: 3,  weight: 56, lastDon: 200, note: 'NOT AVAILABLE' },
-    { name: 'Deepak Yadav',     gender: 'MALE',   bg: 'B_NEG',  place: 'RAIPUR_SOUTH', age: 35, avail: true,  elig: 'TEMPORARILY_UNAVAILABLE',  donations: 6,  weight: 72, lastDon: 60,  note: 'COOLDOWN — donated 60 days ago' },
-    { name: 'Neha Agrawal',     gender: 'FEMALE', bg: 'AB_NEG', place: 'RAIPUR_SOUTH', age: 29, avail: true,  elig: 'NEEDS_MEDICAL_REVIEW',     donations: 2,  weight: 58, lastDon: 300, note: 'NEEDS REVIEW — flagged by medical staff' },
+    { name: 'Amit Sharma', gender: 'MALE', bg: 'O_NEG', place: 'RAIPUR_CITY', age: 32, avail: true, elig: 'ELIGIBLE', donations: 8, weight: 78, lastDon: 100, note: 'Eligible — veteran donor, rare O-' },
+    { name: 'Kavya Patel', gender: 'FEMALE', bg: 'A_NEG', place: 'RAIPUR_CITY', age: 28, avail: false, elig: 'ELIGIBLE', donations: 3, weight: 56, lastDon: 200, note: 'NOT AVAILABLE' },
+    { name: 'Deepak Yadav', gender: 'MALE', bg: 'B_NEG', place: 'RAIPUR_SOUTH', age: 35, avail: true, elig: 'TEMPORARILY_UNAVAILABLE', donations: 6, weight: 72, lastDon: 60, note: 'COOLDOWN — donated 60 days ago' },
+    { name: 'Neha Agrawal', gender: 'FEMALE', bg: 'AB_NEG', place: 'RAIPUR_SOUTH', age: 29, avail: true, elig: 'NEEDS_MEDICAL_REVIEW', donations: 2, weight: 58, lastDon: 300, note: 'NEEDS REVIEW — flagged by medical staff' },
     // --- Bhilai / Durg ---
-    { name: 'Vikram Singh',     gender: 'MALE',   bg: 'O_POS',  place: 'BHILAI',       age: 40, avail: true,  elig: 'ELIGIBLE',                 donations: 10, weight: 80, lastDon: 110, note: 'Eligible — experienced donor' },
-    { name: 'Anita Dewangan',   gender: 'FEMALE', bg: 'B_POS',  place: 'BHILAI',       age: 26, avail: true,  elig: 'ELIGIBLE',                 donations: 1,  weight: 51, lastDon: 200, note: 'Eligible' },
-    { name: 'Rahul Thakur',     gender: 'MALE',   bg: 'A_POS',  place: 'DURG',         age: 30, avail: false, elig: 'ELIGIBLE',                 donations: 5,  weight: 65, lastDon: 150, note: 'NOT AVAILABLE' },
+    { name: 'Vikram Singh', gender: 'MALE', bg: 'O_POS', place: 'BHILAI', age: 40, avail: true, elig: 'ELIGIBLE', donations: 10, weight: 80, lastDon: 110, note: 'Eligible — experienced donor' },
+    { name: 'Anita Dewangan', gender: 'FEMALE', bg: 'B_POS', place: 'BHILAI', age: 26, avail: true, elig: 'ELIGIBLE', donations: 1, weight: 51, lastDon: 200, note: 'Eligible' },
+    { name: 'Rahul Thakur', gender: 'MALE', bg: 'A_POS', place: 'DURG', age: 30, avail: false, elig: 'ELIGIBLE', donations: 5, weight: 65, lastDon: 150, note: 'NOT AVAILABLE' },
     // --- Bilaspur ---
-    { name: 'Meera Jaiswal',    gender: 'FEMALE', bg: 'O_POS',  place: 'BILASPUR',     age: 27, avail: true,  elig: 'ELIGIBLE',                 donations: 3,  weight: 54, lastDon: 95,  note: 'Eligible — far from Raipur (tests radius)' },
-    { name: 'Suresh Markam',    gender: 'MALE',   bg: 'B_POS',  place: 'BILASPUR',     age: 45, avail: true,  elig: 'ELIGIBLE',                 donations: 12, weight: 82, lastDon: 100, note: 'Eligible — veteran donor, far' },
+    { name: 'Meera Jaiswal', gender: 'FEMALE', bg: 'O_POS', place: 'BILASPUR', age: 27, avail: true, elig: 'ELIGIBLE', donations: 3, weight: 54, lastDon: 95, note: 'Eligible — far from Raipur (tests radius)' },
+    { name: 'Suresh Markam', gender: 'MALE', bg: 'B_POS', place: 'BILASPUR', age: 45, avail: true, elig: 'ELIGIBLE', donations: 12, weight: 82, lastDon: 100, note: 'Eligible — veteran donor, far' },
     // --- Edge cases ---
-    { name: 'Riya Deshmukh',    gender: 'FEMALE', bg: 'AB_POS', place: 'RAIPUR_CITY',  age: 19, avail: true,  elig: 'ELIGIBLE',                 donations: 0,  weight: 48, lastDon: null, note: 'Eligible — brand new donor, borderline weight' },
-    { name: 'Prakash Soni',     gender: 'MALE',   bg: 'O_NEG',  place: 'RAIPUR_CITY',  age: 67, avail: false, elig: 'TEMPORARILY_UNAVAILABLE',  donations: 15, weight: 70, lastDon: 365, note: 'OVERAGE — 67 years old (max 65), also SUSPENDED account' },
+    { name: 'Riya Deshmukh', gender: 'FEMALE', bg: 'AB_POS', place: 'RAIPUR_CITY', age: 19, avail: true, elig: 'ELIGIBLE', donations: 0, weight: 48, lastDon: null, note: 'Eligible — brand new donor, borderline weight' },
+    { name: 'Prakash Soni', gender: 'MALE', bg: 'O_NEG', place: 'RAIPUR_CITY', age: 67, avail: false, elig: 'TEMPORARILY_UNAVAILABLE', donations: 15, weight: 70, lastDon: 365, note: 'OVERAGE — 67 years old (max 65), also SUSPENDED account' },
   ];
 
   const donors = [];
@@ -141,7 +143,7 @@ async function main() {
     const loc = PLACES[d.place];
     const phoneNum = `+91900000010${String(i + 1).padStart(2, '0')}`;
     const firstName = d.name.split(' ')[0].toLowerCase();
-    const emailAddr = `${firstName}${i}@lifelink.in`;
+    const emailAddr = `${firstName}@lifelink.in`;
 
     const donor = await prisma.user.create({
       data: {
@@ -151,7 +153,7 @@ async function main() {
         passwordHash: await pw('donor123'),
         fullName: d.name,
         role: 'DONOR',
-        accountStatus: i === 19 ? 'SUSPENDED' : 'ACTIVE', // Prakash is suspended
+        accountStatus: i === 20 ? 'SUSPENDED' : 'ACTIVE', // Prakash is suspended
         verificationStatus: 'VERIFIED',
         profileComplete: true,
         notificationPrefs: { create: {} },
@@ -163,8 +165,8 @@ async function main() {
             address: `${10 + i * 5}, Sector ${(i % 10) + 20}, ${loc.city}`,
             city: loc.city,
             state: loc.state,
-            latitude: jitter(loc.lat),
-            longitude: jitter(loc.lng),
+            latitude: d.customLat || jitter(loc.lat),
+            longitude: d.customLng || jitter(loc.lng),
             weight: d.weight,
             lastDonationDate: d.lastDon ? daysAgo(d.lastDon) : null,
             availability: d.avail ? 'AVAILABLE' : 'NOT_AVAILABLE',
@@ -187,13 +189,13 @@ async function main() {
   console.log('  ✦ 6 hospitals...');
   const HOSP_LIST = [
     // Nearest to IIIT-NR
-    { name: 'Sadbhavna Hospital',                  lat: 21.1310, lng: 81.7916, place: 'ATAL_NAGAR',   reg: 'HOSP-CG-001', lic: 'LIC-CG-001', rep: 'Dr. Rajeev Gupta',   addr: 'Sector 30, Atal Nagar' },
-    { name: 'BALCO Medical Centre',                lat: 21.1380, lng: 81.7800, place: 'ATAL_NAGAR',   reg: 'HOSP-CG-002', lic: 'LIC-CG-002', rep: 'Dr. Vivek Tandon',   addr: 'Sector 36, Atal Nagar, Uparwara' },
-    { name: 'Shri Sathya Sai Sanjeevani Hospital', lat: 21.1390, lng: 81.7520, place: 'ATAL_NAGAR',   reg: 'HOSP-CG-003', lic: 'LIC-CG-003', rep: 'Dr. Ashish Jain',    addr: 'Sector 3, Nava Raipur' },
+    { name: 'Sadbhavna Hospital', lat: 21.1310, lng: 81.7916, place: 'ATAL_NAGAR', reg: 'HOSP-CG-001', lic: 'LIC-CG-001', rep: 'Dr. Rajeev Gupta', addr: 'Sector 30, Atal Nagar' },
+    { name: 'BALCO Medical Centre', lat: 21.1380, lng: 81.7800, place: 'ATAL_NAGAR', reg: 'HOSP-CG-002', lic: 'LIC-CG-002', rep: 'Dr. Vivek Tandon', addr: 'Sector 36, Atal Nagar, Uparwara' },
+    { name: 'Shri Sathya Sai Sanjeevani Hospital', lat: 21.1390, lng: 81.7520, place: 'ATAL_NAGAR', reg: 'HOSP-CG-003', lic: 'LIC-CG-003', rep: 'Dr. Ashish Jain', addr: 'Sector 3, Nava Raipur' },
     // Raipur city
-    { name: 'AIIMS Raipur',                        lat: 21.1800, lng: 81.7380, place: 'ATAL_NAGAR',   reg: 'HOSP-CG-004', lic: 'LIC-CG-004', rep: 'Dr. Nitin Nagarkar', addr: 'GE Road, Tatibandh' },
-    { name: 'Ramkrishna CARE Hospital',             lat: 21.2230, lng: 81.6375, place: 'RAIPUR_SOUTH', reg: 'HOSP-CG-005', lic: 'LIC-CG-005', rep: 'Dr. Ajay Tiwari',    addr: 'Pachpedhi Naka, Dhamtari Road' },
-    { name: 'MMI Narayana Hospital',                lat: 21.2550, lng: 81.6060, place: 'RAIPUR_CITY',  reg: 'HOSP-CG-006', lic: 'LIC-CG-006', rep: 'Dr. Sunil Agrawal',  addr: 'Lalpur, Raipur' },
+    { name: 'AIIMS Raipur', lat: 21.1800, lng: 81.7380, place: 'ATAL_NAGAR', reg: 'HOSP-CG-004', lic: 'LIC-CG-004', rep: 'Dr. Nitin Nagarkar', addr: 'GE Road, Tatibandh' },
+    { name: 'Ramkrishna CARE Hospital', lat: 21.2230, lng: 81.6375, place: 'RAIPUR_SOUTH', reg: 'HOSP-CG-005', lic: 'LIC-CG-005', rep: 'Dr. Ajay Tiwari', addr: 'Pachpedhi Naka, Dhamtari Road' },
+    { name: 'MMI Narayana Hospital', lat: 21.2550, lng: 81.6060, place: 'RAIPUR_CITY', reg: 'HOSP-CG-006', lic: 'LIC-CG-006', rep: 'Dr. Sunil Agrawal', addr: 'Lalpur, Raipur' },
   ];
 
   const hospitals = [];
@@ -240,7 +242,7 @@ async function main() {
   // ─── 2 Blood Banks ──────────────────────────────────────────────────────────
   console.log('  ✦ 2 blood banks...');
   const BB_LIST = [
-    { name: 'State Blood Bank Raipur',  lat: 21.2490, lng: 81.6310, addr: 'Jail Road, Raipur' },
+    { name: 'State Blood Bank Raipur', lat: 21.2490, lng: 81.6310, addr: 'Jail Road, Raipur' },
     { name: 'Rotary Blood Bank Raipur', lat: 21.2350, lng: 81.6250, addr: 'Pandri, Raipur' },
   ];
 
@@ -302,8 +304,8 @@ async function main() {
   // ─── 2 NGOs + 2 Camps ───────────────────────────────────────────────────────
   console.log('  ✦ 2 NGOs with 2 camps...');
   const NGO_LIST = [
-    { name: 'CG Blood Seva',            reg: 'NGO-CG-001', rep: 'Rakesh Sahu',    place: 'RAIPUR_CITY' },
-    { name: 'Jeevan Dhara Foundation',   reg: 'NGO-CG-002', rep: 'Sunita Pandey',  place: 'BHILAI' },
+    { name: 'CG Blood Seva', reg: 'NGO-CG-001', rep: 'Rakesh Sahu', place: 'RAIPUR_CITY' },
+    { name: 'Jeevan Dhara Foundation', reg: 'NGO-CG-002', rep: 'Sunita Pandey', place: 'BHILAI' },
   ];
 
   const ngos = [];
@@ -624,9 +626,9 @@ async function main() {
   console.log('║  Hospital     admin@sadbhavnahospital.in         / hospital123 ║');
   console.log('║  Hospital     admin@balcomedicalcentre.in        / hospital123 ║');
   console.log('║  Hospital     admin@aiimsraipur.in               / hospital123 ║');
-  console.log('║  Blood Bank   admin@statebloodbankriapur.in      / bloodbank123║');
+  console.log('║  Blood Bank   admin@statebloodbankraipur.in      / bloodbank123║');
   console.log('║  NGO          admin@cgbloodseva.org              / ngo123      ║');
-  console.log('║  Donor        aarav0@lifelink.in                 / donor123    ║');
+  console.log('║  Donor        aarav@lifelink.in                  / donor123    ║');
   console.log('╠═══════════════════════════════════════════════════════════════╣');
   console.log('║  20 donors · 6 hospitals · 2 blood banks · 2 NGOs · 2 camps ║');
   console.log('║  2 emergencies · 16 inventory items · 6 slots · 4 donations ║');

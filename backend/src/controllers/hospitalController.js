@@ -235,6 +235,9 @@ async function updateDonorResponseStatus(req, res) {
   if (response.status !== 'ACCEPTED' && req.body.status === 'ARRIVED') {
     throw new AppError('Donor must have accepted before marking arrived', 400, 'INVALID_STATUS');
   }
+  if (response.status !== 'ACCEPTED' && req.body.status === 'NO_SHOW') {
+    throw new AppError('Donor must have accepted before marking no-show', 400, 'INVALID_STATUS');
+  }
 
   const now = new Date();
   const data = { status: req.body.status };
@@ -248,6 +251,28 @@ async function updateDonorResponseStatus(req, res) {
       donorProfile: { include: { user: { select: { fullName: true, phone: true } } } },
     },
   });
+
+  // When NO_SHOW, decrement acceptedUnits so the system knows this unit is unfulfilled
+  if (req.body.status === 'NO_SHOW') {
+    await prisma.emergencyRequest.update({
+      where: { id: emergency.id },
+      data: { acceptedUnits: { decrement: 1 } },
+    });
+  }
+
+  // When DONATION_COMPLETED, update donor profile stats
+  if (req.body.status === 'DONATION_COMPLETED') {
+    await prisma.donorProfile.update({
+      where: { id: response.donorProfileId },
+      data: {
+        totalDonations: { increment: 1 },
+        lastDonationDate: now,
+        eligibilityStatus: 'TEMPORARILY_UNAVAILABLE',
+        eligibilityReason: 'Cooldown period — recently donated',
+        eligibilityCheckedAt: now,
+      },
+    });
+  }
 
   const { emitEmergencyEvent } = require('../services/emergencyService');
   emitEmergencyEvent(emergency.id, 'emergency:donor-response', {

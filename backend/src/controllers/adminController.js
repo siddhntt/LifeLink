@@ -86,6 +86,7 @@ async function getUsers(req, res) {
       select: {
         id: true,
         phone: true,
+        email: true,
         fullName: true,
         role: true,
         accountStatus: true,
@@ -93,6 +94,10 @@ async function getUsers(req, res) {
         profileComplete: true,
         createdAt: true,
         lastLoginAt: true,
+        donorProfile: { select: { id: true, bloodGroup: true, gender: true, dateOfBirth: true, weight: true, totalDonations: true, lastDonationDate: true, eligibilityStatus: true, availabilityStatus: true } },
+        hospital: { select: { id: true, name: true, city: true, address: true, contactPhone: true, contactEmail: true, licenseNumber: true, verificationStatus: true } },
+        bloodBank: { select: { id: true, name: true, city: true, address: true, contactPhone: true, licenseNumber: true, verificationStatus: true, operatingHours: true } },
+        ngo: { select: { id: true, name: true, city: true, representativeName: true, verificationStatus: true } },
       },
       skip: (page - 1) * limit,
       take: parseInt(limit),
@@ -208,15 +213,15 @@ async function getPendingVerifications(req, res) {
   const [hospitals, bloodBanks, ngos, camps] = await Promise.all([
     prisma.hospital.findMany({
       where: { verificationStatus: 'PENDING' },
-      include: { user: { select: { phone: true, createdAt: true } } },
+      include: { user: { select: { phone: true, email: true, fullName: true, createdAt: true } } },
     }),
     prisma.bloodBank.findMany({
       where: { verificationStatus: 'PENDING' },
-      include: { user: { select: { phone: true, createdAt: true } } },
+      include: { user: { select: { phone: true, email: true, fullName: true, createdAt: true } } },
     }),
     prisma.nGO.findMany({
       where: { verificationStatus: 'PENDING' },
-      include: { user: { select: { phone: true, createdAt: true } } },
+      include: { user: { select: { phone: true, email: true, fullName: true, createdAt: true } } },
     }),
     prisma.donationCamp.findMany({
       where: { status: 'PENDING_APPROVAL' },

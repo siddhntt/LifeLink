@@ -1,11 +1,55 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { emergencyAPI } from '../../services/endpoints';
 import { useSocket } from '../../context/SocketContext';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { BLOOD_GROUP_LABELS, formatDateTime } from '../../utils/constants';
-import { MapPin, Navigation, WifiOff, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { MapPin, Navigation, WifiOff, AlertTriangle, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
+const HOSPITAL_ICON = new L.Icon({
+  iconUrl: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 50" width="40" height="50">
+      <circle cx="20" cy="20" r="18" fill="#ef4444" stroke="white" stroke-width="3"/>
+      <text x="20" y="26" text-anchor="middle" font-size="18" fill="white">🏥</text>
+      <polygon points="20,48 10,34 30,34" fill="#ef4444"/>
+    </svg>
+  `),
+  iconSize: [40, 50], iconAnchor: [20, 50], popupAnchor: [0, -50],
+});
+
+const DONOR_ICON = new L.Icon({
+  iconUrl: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 50" width="40" height="50">
+      <circle cx="20" cy="20" r="18" fill="#2563eb" stroke="white" stroke-width="3"/>
+      <text x="20" y="26" text-anchor="middle" font-size="18" fill="white">📍</text>
+      <polygon points="20,48 10,34 30,34" fill="#2563eb"/>
+    </svg>
+  `),
+  iconSize: [40, 50], iconAnchor: [20, 50], popupAnchor: [0, -50],
+});
+
+function FitBounds({ hospital, donor }) {
+  const map = useMap();
+  useEffect(() => {
+    const pts = [];
+    if (hospital) pts.push([hospital.lat, hospital.lng]);
+    if (donor) pts.push([donor.lat, donor.lng]);
+    if (pts.length === 2) map.fitBounds(pts, { padding: [40, 40] });
+    else if (pts.length === 1) map.setView(pts[0], 14);
+  }, [hospital, donor, map]);
+  return null;
+}
 
 const THROTTLE_MS = 7000;       // send location every ~7s
 const MIN_DISTANCE_M = 30;      // or when moved at least 30 metres
@@ -305,6 +349,58 @@ export default function EmergencyResponsePage() {
               <p className="font-medium text-green-800">You have accepted this request</p>
               <p className="text-sm text-green-700">Please proceed to {request.hospital?.name} as soon as possible.</p>
             </div>
+          </div>
+        )}
+
+        {/* Navigation Map (shown after accepting) */}
+        {hasAccepted && request.hospital?.latitude && request.hospital?.longitude && (
+          <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
+            <h2 className="mb-3 font-semibold text-gray-900 flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-red-500" />
+              Navigate to Hospital
+            </h2>
+            <div className="h-64 overflow-hidden rounded-xl ring-1 ring-gray-200">
+              <MapContainer
+                center={[request.hospital.latitude, request.hospital.longitude]}
+                zoom={13}
+                style={{ height: '100%', width: '100%' }}
+                scrollWheelZoom={false}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <FitBounds
+                  hospital={{ lat: request.hospital.latitude, lng: request.hospital.longitude }}
+                  donor={lastPositionRef.current ? { lat: lastPositionRef.current.latitude, lng: lastPositionRef.current.longitude } : null}
+                />
+                <Marker position={[request.hospital.latitude, request.hospital.longitude]} icon={HOSPITAL_ICON}>
+                  <Popup><strong>🏥 {request.hospital.name}</strong><br />{request.hospital.city}</Popup>
+                </Marker>
+                {lastPositionRef.current && (
+                  <Marker position={[lastPositionRef.current.latitude, lastPositionRef.current.longitude]} icon={DONOR_ICON}>
+                    <Popup><strong>📍 Your Location</strong></Popup>
+                  </Marker>
+                )}
+                {lastPositionRef.current && (
+                  <Polyline
+                    positions={[
+                      [lastPositionRef.current.latitude, lastPositionRef.current.longitude],
+                      [request.hospital.latitude, request.hospital.longitude],
+                    ]}
+                    pathOptions={{ color: '#2563eb', weight: 3, dashArray: '8 6', opacity: 0.7 }}
+                  />
+                )}
+              </MapContainer>
+            </div>
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${request.hospital.latitude},${request.hospital.longitude}`}
+              target="_blank" rel="noopener noreferrer"
+              className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Open in Google Maps
+            </a>
           </div>
         )}
 
