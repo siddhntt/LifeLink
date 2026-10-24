@@ -48,7 +48,7 @@ export default function AdminUsers() {
           <DetailRow label="Total Donations" value={d.totalDonations} />
           <DetailRow label="Last Donation" value={d.lastDonationDate ? new Date(d.lastDonationDate).toLocaleDateString() : 'Never'} />
           <DetailRow label="Eligibility" value={d.eligibilityStatus} />
-          <DetailRow label="Availability" value={d.availabilityStatus} />
+          <DetailRow label="Availability" value={d.availability || d.availabilityStatus} />
           <DetailRow label="Email" value={u.email} />
           <DetailRow label="Phone" value={u.phone} />
           <DetailRow label="Last Login" value={u.lastLoginAt ? formatDateTime(u.lastLoginAt) : 'Never'} />
@@ -76,11 +76,11 @@ export default function AdminUsers() {
       return (
         <div className="mt-3 rounded-lg bg-gray-50 p-3 border-t divide-y divide-gray-200">
           <DetailRow label="Blood Bank Name" value={b.name} />
-          <DetailRow label="License Number" value={b.licenseNumber} />
+          <DetailRow label="Registration No." value={b.registrationNumber || b.licenseNumber} />
           <DetailRow label="City" value={b.city} />
           <DetailRow label="Address" value={b.address} />
           <DetailRow label="Contact Phone" value={b.contactPhone} />
-          <DetailRow label="Operating Hours" value={b.operatingHours} />
+          <DetailRow label="Contact Email" value={b.contactEmail} />
           <DetailRow label="Verification" value={b.verificationStatus} />
           <DetailRow label="Email" value={u.email} />
           <DetailRow label="Last Login" value={u.lastLoginAt ? formatDateTime(u.lastLoginAt) : 'Never'} />
@@ -92,8 +92,12 @@ export default function AdminUsers() {
       return (
         <div className="mt-3 rounded-lg bg-gray-50 p-3 border-t divide-y divide-gray-200">
           <DetailRow label="NGO Name" value={n.name} />
+          <DetailRow label="Registration No." value={n.registrationNumber} />
           <DetailRow label="City" value={n.city} />
+          <DetailRow label="Address" value={n.address} />
           <DetailRow label="Representative" value={n.representativeName} />
+          <DetailRow label="Contact Phone" value={n.contactPhone} />
+          <DetailRow label="Contact Email" value={n.contactEmail} />
           <DetailRow label="Verification" value={n.verificationStatus} />
           <DetailRow label="Email" value={u.email} />
           <DetailRow label="Last Login" value={u.lastLoginAt ? formatDateTime(u.lastLoginAt) : 'Never'} />

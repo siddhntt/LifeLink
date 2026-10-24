@@ -97,13 +97,12 @@ export default function AdminVerification() {
           ['Emergency Phone', 'emergencyPhone'], ['Representative', 'representativeName'],
         ]} />
         <Section title="Blood Banks" list={items.bloodBanks} type="bloodBank" detailFields={[
-          ['Blood Bank Name', 'name'], ['License Number', 'licenseNumber'], ['City', 'city'], ['State', 'state'],
-          ['Full Address', 'address'], ['Contact Phone', 'contactPhone'], ['Operating Hours', 'operatingHours'],
-          ['Has Component Separation', 'hasComponentSeparation'], ['Storage Capacity', 'storageCapacity'],
+          ['Blood Bank Name', 'name'], ['Registration / License', 'registrationNumber'], ['City', 'city'], ['State', 'state'],
+          ['Full Address', 'address'], ['Contact Phone', 'contactPhone'], ['Contact Email', 'contactEmail'],
         ]} />
         <Section title="NGOs" list={items.ngos} type="ngo" detailFields={[
-          ['NGO Name', 'name'], ['City', 'city'], ['State', 'state'], ['Address', 'address'],
-          ['Representative', 'representativeName'], ['Contact Phone', 'contactPhone'],
+          ['NGO Name', 'name'], ['Registration No.', 'registrationNumber'], ['City', 'city'], ['State', 'state'], ['Address', 'address'],
+          ['Representative', 'representativeName'], ['Contact Phone', 'contactPhone'], ['Contact Email', 'contactEmail'],
         ]} />
         <Section title="Camps Pending Approval" list={items.camps} type="camp" detailFields={[
           ['Camp Name', 'name'], ['Date', 'date'], ['City', 'city'], ['Address', 'address'],
