@@ -18,7 +18,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const { data } = await authAPI.emailLogin({ email, password });
+      const { data } = await authAPI.emailLogin({ email: email.trim().toLowerCase(), password });
       login(data.data.token, data.data.user);
       navigate(data.data.user.redirectTo || '/');
     } catch (err) {

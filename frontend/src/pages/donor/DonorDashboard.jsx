@@ -6,7 +6,18 @@ import DashboardLayout from '../../layouts/DashboardLayout';
 import StatusBadge from '../../components/StatusBadge';
 import LoadingSpinner, { EmptyState } from '../../components/LoadingSpinner';
 import { BLOOD_GROUP_LABELS, formatDate, formatDateTime } from '../../utils/constants';
-import { Heart, Calendar, AlertTriangle, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Heart, Calendar, AlertTriangle, ToggleLeft, ToggleRight, MapPin } from 'lucide-react';
+
+function formatLocationAge(isoDate) {
+  const diffMs = Date.now() - new Date(isoDate).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
 
 export default function DonorDashboard() {
   const [data, setData] = useState(null);
@@ -72,6 +83,24 @@ export default function DonorDashboard() {
             </p>
           )}
           <p className="mt-2 text-xs text-gray-400">{evaluation?.disclaimer}</p>
+
+          {/* Location freshness indicator */}
+          <div className="mt-3 flex items-center gap-1.5 text-xs">
+            <MapPin className="h-3.5 w-3.5 text-gray-400" />
+            {profile?.locationUpdatedAt ? (
+              <span className="text-gray-500">
+                📍 Location updated {formatLocationAge(profile.locationUpdatedAt)}
+              </span>
+            ) : profile?.latitude ? (
+              <span className="text-amber-600">
+                ⚠️ Using registration location — open the app regularly to keep it fresh
+              </span>
+            ) : (
+              <span className="text-red-500">
+                ❌ No location set — enable location to receive emergency alerts
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="rounded-xl bg-white p-6 shadow-sm">

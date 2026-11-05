@@ -10,6 +10,7 @@ import StatusBadge from '../../components/StatusBadge';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { BLOOD_GROUP_LABELS, formatDateTime } from '../../utils/constants';
 import { Radio, MapPin, Clock, Users, Target, CheckCircle2, Phone, UserCheck, Droplets, Navigation } from 'lucide-react';
+import { fetchDrivingRoute, straightLine } from '../../utils/routing';
 
 // Fix leaflet default marker icons (Vite asset issue)
 delete L.Icon.Default.prototype._getIconUrl;
@@ -83,6 +84,7 @@ export default function EmergencyRequestDetail() {
   const [donorLocation, setDonorLocation] = useState(null);
   const [trackingStatus, setTrackingStatus] = useState('waiting');
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
+  const [routeCoords, setRouteCoords] = useState([]);
 
   const load = useCallback(() => {
     emergencyAPI.get(id).then(({ data }) => setRequest(data.data)).finally(() => setLoading(false));
@@ -117,6 +119,7 @@ export default function EmergencyRequestDetail() {
       on('emergency:radius-expanded', (data) => { if (data.requestId === id) load(); }),
       on('emergency:fulfilled', (data) => { if (data.requestId === id) load(); }),
       on('emergency:cancelled', (data) => { if (data.requestId === id) load(); }),
+      on('emergency:status-changed', (data) => { if (data.requestId === id) load(); }),
       // Live location events
       on('donor:location-update', (data) => {
         if (data.requestId === id) {
@@ -142,6 +145,28 @@ export default function EmergencyRequestDetail() {
       unsubs.forEach((u) => u());
     };
   }, [id, load, on, emit]);
+
+  // Fetch actual driving route when donor location updates
+  useEffect(() => {
+    if (!donorLocation || !request?.hospital) return;
+    const hosp = request.hospital;
+    if (!hosp.latitude || !hosp.longitude) return;
+
+    let cancelled = false;
+    const from = { latitude: donorLocation.latitude, longitude: donorLocation.longitude };
+    const to = { latitude: hosp.latitude, longitude: hosp.longitude };
+
+    fetchDrivingRoute(from, to).then((route) => {
+      if (cancelled) return;
+      if (route && route.length > 0) {
+        setRouteCoords(route);
+      } else {
+        setRouteCoords(straightLine(from, to));
+      }
+    });
+
+    return () => { cancelled = true; };
+  }, [donorLocation?.latitude, donorLocation?.longitude, request?.hospital?.latitude, request?.hospital?.longitude]);
 
   const cancel = async () => {
     if (!confirm('Cancel this emergency request?')) return;
@@ -316,13 +341,10 @@ export default function EmergencyRequestDetail() {
                     </Popup>
                   </Marker>
                 )}
-                {donorLocation && hospitalPos && (
+                {routeCoords.length > 0 && (
                   <Polyline
-                    positions={[
-                      [hospitalPos.latitude, hospitalPos.longitude],
-                      [donorLocation.latitude, donorLocation.longitude],
-                    ]}
-                    pathOptions={{ color: '#2563eb', weight: 3, dashArray: '8 6', opacity: 0.7 }}
+                    positions={routeCoords}
+                    pathOptions={{ color: '#2563eb', weight: 4, opacity: 0.8 }}
                   />
                 )}
               </MapContainer>

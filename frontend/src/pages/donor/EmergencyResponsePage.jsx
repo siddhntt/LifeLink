@@ -9,6 +9,7 @@ import DashboardLayout from '../../layouts/DashboardLayout';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { BLOOD_GROUP_LABELS, formatDateTime } from '../../utils/constants';
 import { MapPin, Navigation, WifiOff, AlertTriangle, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { fetchDrivingRoute, straightLine } from '../../utils/routing';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -86,6 +87,66 @@ const STATUS_UI = {
   [STATUS.DISCONNECTED]: { color: 'bg-yellow-100 text-yellow-700', icon: WifiOff, text: 'Connection lost — reconnecting...' },
 };
 
+// Sub-component: map with actual driving route
+function DonorRouteMap({ hospital, donorPos, routeCoords, setRouteCoords }) {
+  // Fetch driving route when donor position changes
+  useEffect(() => {
+    if (!donorPos || !hospital?.latitude || !hospital?.longitude) return;
+
+    let cancelled = false;
+    const from = { latitude: donorPos.latitude, longitude: donorPos.longitude };
+    const to = { latitude: hospital.latitude, longitude: hospital.longitude };
+
+    fetchDrivingRoute(from, to).then((route) => {
+      if (cancelled) return;
+      if (route && route.length > 0) {
+        setRouteCoords(route);
+      } else {
+        // Fallback to straight line
+        setRouteCoords(straightLine(from, to));
+      }
+    });
+
+    return () => { cancelled = true; };
+  }, [donorPos?.latitude, donorPos?.longitude, hospital?.latitude, hospital?.longitude, setRouteCoords]);
+
+  const hospPos = [hospital.latitude, hospital.longitude];
+
+  return (
+    <div className="h-64 overflow-hidden rounded-xl ring-1 ring-gray-200">
+      <MapContainer
+        center={hospPos}
+        zoom={13}
+        style={{ height: '100%', width: '100%' }}
+        scrollWheelZoom={false}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <FitBounds
+          hospital={{ lat: hospital.latitude, lng: hospital.longitude }}
+          donor={donorPos ? { lat: donorPos.latitude, lng: donorPos.longitude } : null}
+        />
+        <Marker position={hospPos} icon={HOSPITAL_ICON}>
+          <Popup><strong>🏥 {hospital.name}</strong><br />{hospital.city}</Popup>
+        </Marker>
+        {donorPos && (
+          <Marker position={[donorPos.latitude, donorPos.longitude]} icon={DONOR_ICON}>
+            <Popup><strong>📍 Your Location</strong></Popup>
+          </Marker>
+        )}
+        {routeCoords.length > 0 && (
+          <Polyline
+            positions={routeCoords}
+            pathOptions={{ color: '#2563eb', weight: 4, opacity: 0.8 }}
+          />
+        )}
+      </MapContainer>
+    </div>
+  );
+}
+
 export default function EmergencyResponsePage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -96,6 +157,8 @@ export default function EmergencyResponsePage() {
   const [hasAccepted, setHasAccepted] = useState(false);
   const [trackingStatus, setTrackingStatus] = useState(STATUS.IDLE);
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
+  const [donorPos, setDonorPos] = useState(null);
+  const [routeCoords, setRouteCoords] = useState([]);
 
   const watchIdRef = useRef(null);
   const lastPositionRef = useRef(null);
@@ -179,6 +242,7 @@ export default function EmergencyResponsePage() {
 
         lastSentTimeRef.current = now;
         lastPositionRef.current = { latitude, longitude };
+        setDonorPos({ latitude, longitude });
 
         if (connected) {
           emit('donor:location-update', {
@@ -359,40 +423,12 @@ export default function EmergencyResponsePage() {
               <MapPin className="h-5 w-5 text-red-500" />
               Navigate to Hospital
             </h2>
-            <div className="h-64 overflow-hidden rounded-xl ring-1 ring-gray-200">
-              <MapContainer
-                center={[request.hospital.latitude, request.hospital.longitude]}
-                zoom={13}
-                style={{ height: '100%', width: '100%' }}
-                scrollWheelZoom={false}
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <FitBounds
-                  hospital={{ lat: request.hospital.latitude, lng: request.hospital.longitude }}
-                  donor={lastPositionRef.current ? { lat: lastPositionRef.current.latitude, lng: lastPositionRef.current.longitude } : null}
-                />
-                <Marker position={[request.hospital.latitude, request.hospital.longitude]} icon={HOSPITAL_ICON}>
-                  <Popup><strong>🏥 {request.hospital.name}</strong><br />{request.hospital.city}</Popup>
-                </Marker>
-                {lastPositionRef.current && (
-                  <Marker position={[lastPositionRef.current.latitude, lastPositionRef.current.longitude]} icon={DONOR_ICON}>
-                    <Popup><strong>📍 Your Location</strong></Popup>
-                  </Marker>
-                )}
-                {lastPositionRef.current && (
-                  <Polyline
-                    positions={[
-                      [lastPositionRef.current.latitude, lastPositionRef.current.longitude],
-                      [request.hospital.latitude, request.hospital.longitude],
-                    ]}
-                    pathOptions={{ color: '#2563eb', weight: 3, dashArray: '8 6', opacity: 0.7 }}
-                  />
-                )}
-              </MapContainer>
-            </div>
+            <DonorRouteMap
+              hospital={request.hospital}
+              donorPos={donorPos}
+              routeCoords={routeCoords}
+              setRouteCoords={setRouteCoords}
+            />
             <a
               href={`https://www.google.com/maps/dir/?api=1&destination=${request.hospital.latitude},${request.hospital.longitude}`}
               target="_blank" rel="noopener noreferrer"

@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, useCallback } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useFCM } from './hooks/useFCM';
+import { useLocationSync } from './hooks/useLocationSync';
 import { useSocket } from './context/SocketContext';
 import { useToast } from './context/ToastContext';
 import { useAuth } from './context/AuthContext';
@@ -51,6 +52,9 @@ function GlobalSocketListener() {
   const { on } = useSocket();
   const { addToast } = useToast();
   const { user } = useAuth();
+
+  // Auto-sync donor's GPS location on every app visit
+  useLocationSync(user);
 
   useEffect(() => {
     if (!user) return;

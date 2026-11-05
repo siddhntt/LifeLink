@@ -14,6 +14,7 @@ export const donorAPI = {
   updateProfile: (data) => api.patch('/donors/profile', data),
   updateAvailability: (availability) => api.patch('/donors/availability', { availability }),
   getHistory: () => api.get('/donors/history'),
+  updateLocation: (data) => api.patch('/donors/location', data),
 };
 
 export const hospitalAPI = {

@@ -254,9 +254,31 @@ async function updateDonorResponseStatus(req, res) {
 
   // When NO_SHOW, decrement acceptedUnits so the system knows this unit is unfulfilled
   if (req.body.status === 'NO_SHOW') {
+    const newAccepted = Math.max(0, emergency.acceptedUnits - 1);
+    const newStatus =
+      newAccepted >= emergency.requiredUnits
+        ? 'FULFILLED'
+        : newAccepted > 0
+          ? 'PARTIALLY_FULFILLED'
+          : 'SEARCHING';
+
     await prisma.emergencyRequest.update({
       where: { id: emergency.id },
-      data: { acceptedUnits: { decrement: 1 } },
+      data: {
+        acceptedUnits: newAccepted,
+        status: newStatus,
+        // Clear fulfilledAt if we're no longer fulfilled
+        ...(newStatus !== 'FULFILLED' && { fulfilledAt: null }),
+      },
+    });
+
+    // Emit status change so frontends update in real time
+    const { emitEmergencyEvent } = require('../services/emergencyService');
+    emitEmergencyEvent(emergency.id, 'emergency:status-changed', {
+      requestId: emergency.id,
+      status: newStatus,
+      acceptedUnits: newAccepted,
+      reason: 'NO_SHOW',
     });
   }
 

@@ -197,6 +197,7 @@ model DonorProfile {
   state               String?
   latitude            Float?
   longitude           Float?
+  locationUpdatedAt   DateTime?
   weight              Float?
   lastDonationDate    DateTime?
   availability        AvailabilityStatus @default(NOT_AVAILABLE)

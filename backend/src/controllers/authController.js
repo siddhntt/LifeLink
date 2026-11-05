@@ -205,9 +205,10 @@ async function emailRegister(req, res) {
 
 async function emailLogin(req, res) {
   const { email, password } = req.body;
+  const normalizedEmail = (email || '').trim().toLowerCase();
 
   const user = await prisma.user.findUnique({
-    where: { email },
+    where: { email: normalizedEmail },
     include: { donorProfile: true, hospital: true, bloodBank: true, ngo: true },
   });
 

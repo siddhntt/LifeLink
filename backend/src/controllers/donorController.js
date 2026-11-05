@@ -127,10 +127,33 @@ async function getDashboard(req, res) {
   });
 }
 
+async function updateLocation(req, res) {
+  const profile = req.user.donorProfile;
+  if (!profile) throw new AppError('Donor profile not found', 404, 'NOT_FOUND');
+
+  const { latitude, longitude, accuracy } = req.body;
+  if (latitude == null || longitude == null) {
+    throw new AppError('latitude and longitude are required', 400, 'VALIDATION_ERROR');
+  }
+
+  const updated = await prisma.donorProfile.update({
+    where: { id: profile.id },
+    data: {
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+      locationUpdatedAt: new Date(),
+    },
+    select: { latitude: true, longitude: true, locationUpdatedAt: true },
+  });
+
+  sendSuccess(res, updated, 'Location updated');
+}
+
 module.exports = {
   getProfile,
   updateProfile,
   updateAvailability,
   getHistory,
   getDashboard,
+  updateLocation,
 };

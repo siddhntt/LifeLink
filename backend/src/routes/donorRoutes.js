@@ -107,4 +107,30 @@ router.patch('/availability', validate(availabilitySchema), asyncHandler(donorCo
  */
 router.get('/history', asyncHandler(donorController.getHistory));
 
+/**
+ * @swagger
+ * /donors/location:
+ *   patch:
+ *     summary: Update donor's current GPS location (auto-called on app visit)
+ *     tags: [Donors]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [latitude, longitude]
+ *             properties:
+ *               latitude:
+ *                 type: number
+ *               longitude:
+ *                 type: number
+ *               accuracy:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Location updated
+ */
+router.patch('/location', asyncHandler(donorController.updateLocation));
+
 module.exports = router;
